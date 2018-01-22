@@ -27,14 +27,15 @@ func (r *room) run() {
 	for {
 		select {
 		case client := <-r.join:
+			// joining
 			r.clients[client] = true
 		case client := <-r.leave:
+			// leaving
 			delete(r.clients, client)
 			close(client.send)
 		case msg := <-r.forward:
 			for client := range r.clients {
 				client.send <- msg
-
 			}
 		}
 	}
@@ -45,7 +46,10 @@ const (
 	messageBufferSize = 256
 )
 
-var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
+var upgrader = &websocket.Upgrader{
+	ReadBufferSize:  socketBufferSize,
+	WriteBufferSize: socketBufferSize,
+}
 
 func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	socket, err := upgrader.Upgrade(w, req, nil)
