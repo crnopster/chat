@@ -47,8 +47,8 @@ const (
 )
 
 var upgrader = &websocket.Upgrader{
-	ReadBufferSize:  socketBufferSize,
 	WriteBufferSize: socketBufferSize,
+	ReadBufferSize:  socketBufferSize,
 }
 
 func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
