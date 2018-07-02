@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/crnopster/trace"
 	"github.com/gorilla/websocket"
 )
 
@@ -12,6 +13,7 @@ type room struct {
 	join    chan *client
 	leave   chan *client
 	clients map[*client]bool
+	tracer  trace.Tracer
 }
 
 func newRoom() *room {
@@ -20,6 +22,7 @@ func newRoom() *room {
 		join:    make(chan *client),
 		leave:   make(chan *client),
 		clients: make(map[*client]bool),
+		tracer:  trace.Off(),
 	}
 }
 
@@ -29,13 +32,17 @@ func (r *room) run() {
 		case client := <-r.join:
 			// joining
 			r.clients[client] = true
+			r.tracer.Trace("new client joined")
 		case client := <-r.leave:
 			// leaving
 			delete(r.clients, client)
 			close(client.send)
+			r.tracer.Trace("client left")
 		case msg := <-r.forward:
+			r.tracer.Trace("Message received: ", string(msg))
 			for client := range r.clients {
 				client.send <- msg
+				r.tracer.Trace("send to client")
 			}
 		}
 	}
@@ -43,7 +50,7 @@ func (r *room) run() {
 
 const (
 	socketBufferSize  = 1024
-	messageBufferSize = 256
+	messageBufferSize = 16
 )
 
 var upgrader = &websocket.Upgrader{
