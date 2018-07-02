@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 	r := newRoom()
 	r.tracer = trace.New(os.Stdout)
-	http.Handle("/", MAuth(&templateHandler{filename: "chat.html"}))
+	http.Handle("/", MustAuth(&templateHandler{filename: "chat.html"}))
 	http.Handle("/room", r)
 	go r.run()
 	log.Println("starting on: ", *addr)
