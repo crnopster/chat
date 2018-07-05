@@ -87,3 +87,8 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "Auth action %s not supported", action)
 	}
 }
+
+// MustAuth adapts handler to ensure authentication has occurred.
+func MustAuth(handler http.Handler) http.Handler {
+	return &authHandler{next: handler}
+}
