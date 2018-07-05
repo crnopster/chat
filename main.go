@@ -10,6 +10,11 @@ import (
 	"text/template"
 
 	"github.com/crnopster/trace"
+	"github.com/stretchr/gomniauth"
+	"github.com/stretchr/gomniauth/providers/facebook"
+	"github.com/stretchr/gomniauth/providers/github"
+	"github.com/stretchr/gomniauth/providers/google"
+	"github.com/stretchr/signature"
 )
 
 type templateHandler struct {
@@ -28,9 +33,21 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func main() {
 	var addr = flag.String("addr", ":8080", "The addr of the application.")
 	flag.Parse()
+	gomniauth.SetSecurityKey(signature.RandomKey(64))
+	gomniauth.WithProviders(
+		google.New("370188396634-02ll8f0a5c11g2nc2tlb9bqgh4f6qim2.apps.googleusercontent.com",
+			"-99pL0TyvJ8pF920wZhw0QjW",
+			"http://127.0.0.1:8080/auth/callback/google"),
+		facebook.New("key", "secret",
+			"http://127.0.0.1:8080/auth/callback/facebook"),
+		github.New("key", "secret",
+			"http://127.0.0.1:8080/auth/callback/github"),
+	)
 	r := newRoom()
 	r.tracer = trace.New(os.Stdout)
-	http.Handle("/", MustAuth(&templateHandler{filename: "chat.html"}))
+	http.Handle("/chat", MustAuth(&templateHandler{filename: "chat.html"}))
+	http.Handle("/login", &templateHandler{filename: "login.html"})
+	http.HandleFunc("/auth/", loginHandler)
 	http.Handle("/room", r)
 	go r.run()
 	log.Println("starting on: ", *addr)
